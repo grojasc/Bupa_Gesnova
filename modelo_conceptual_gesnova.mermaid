@@ -1,0 +1,188 @@
+erDiagram
+    %% ENTIDADES PRINCIPALES CON NOMBRES SEMANTICOS
+    
+    ORGANIZACION ||--o{ PACIENTE : "atiende"
+    ORGANIZACION ||--o{ EPISODIO_CLINICO : "gestiona"
+    ORGANIZACION ||--o{ FACTURA : "emite"
+    ORGANIZACION ||--o{ CENTRO_MEDICO : "opera"
+    ORGANIZACION ||--o{ TRANSACCION_CAJA : "registra"
+    
+    PACIENTE ||--o{ EPISODIO_CLINICO : "tiene"
+    PACIENTE ||--o{ FACTURA : "recibe"
+    PACIENTE }o--|| ASEGURADORA : "está_cubierto_por"
+    
+    ASEGURADORA ||--o{ EPISODIO_CLINICO : "cubre"
+    ASEGURADORA ||--o{ LINEA_FACTURA : "paga_parcialmente"
+    
+    EPISODIO_CLINICO ||--o{ DEVENGO_PRESTACION : "contiene"
+    EPISODIO_CLINICO ||--o{ FACTURA : "genera"
+    
+    DEVENGO_PRESTACION }o--|| PRESTACION_MEDICA : "registra"
+    DEVENGO_PRESTACION }o--|| CENTRO_MEDICO : "se_realiza_en"
+    DEVENGO_PRESTACION }o--|| CUENTA_CONTABLE : "se_contabiliza_en"
+    
+    PRESTACION_MEDICA ||--o{ LINEA_FACTURA : "se_factura_en"
+    PRESTACION_MEDICA }o--|| CATEGORIA_PRESTACION : "pertenece_a"
+    
+    FACTURA ||--|{ LINEA_FACTURA : "contiene"
+    FACTURA ||--o{ TRANSACCION_CAJA : "se_paga_con"
+    
+    TRANSACCION_CAJA }o--|| CAJA : "se_registra_en"
+    TRANSACCION_CAJA }o--|| CAJERO : "es_operada_por"
+    TRANSACCION_CAJA }o--|| TIPO_PAGO : "utiliza"
+    TRANSACCION_CAJA ||--|{ LINEA_TRANSACCION : "detalla"
+    
+    %% ORGANIZACION (ad_org)
+    ORGANIZACION {
+        string codigo_sociedad "value"
+        string nombre_organizacion "name"
+        string rut_organizacion "taxid"
+        string tipo_entidad "legal entity"
+    }
+    
+    %% PACIENTE (c_bpartner donde iscustomer=Y)
+    PACIENTE {
+        string rut_paciente "taxid"
+        string codigo_paciente "value"
+        string nombre_completo "name"
+        date fecha_nacimiento "birthday"
+        string genero "gender"
+        string grupo_sanguineo "bloodgroup"
+        string telefono "phone"
+        string email "email"
+        int aseguradora_id "ex_payor_id"
+    }
+    
+    %% ASEGURADORA (c_bpartner con rol aseguradora)
+    ASEGURADORA {
+        string rut_aseguradora "taxid"
+        string codigo_aseguradora "value"
+        string nombre_aseguradora "name"
+        string tipo_seguro "insurance type"
+    }
+    
+    %% EPISODIO_CLINICO (vinculado a ex_episode + i_accrual)
+    EPISODIO_CLINICO {
+        string codigo_episodio "ex_episodevalue"
+        date fecha_apertura "episode start date"
+        date fecha_cierre "episode end date"
+        string estado_episodio "open/closed"
+        string tipo_atencion "ambulatorio/hospitalizado"
+    }
+    
+    %% DEVENGO_PRESTACION (i_accrual)
+    DEVENGO_PRESTACION {
+        string codigo_episodio "ex_episodevalue"
+        string codigo_paciente "bpartnervalue"
+        string nombre_paciente "bpartnername"
+        string codigo_prestacion "productvalue"
+        string descripcion_prestacion "description"
+        date fecha_transaccion "datetrx"
+        date fecha_prestacion "datefrom"
+        decimal monto_bruto "priceactual"
+        decimal monto_iva "taxamt"
+        decimal monto_neto "linenetamt"
+        int cantidad "qtyordered"
+        string organizacion "orgvalue"
+        string centro_medico "ex_locale_name"
+        string aseguradora "payorvalue"
+        string cuenta_contable "ex_mainaccount"
+        string tipo_proceso "ex_processtype"
+    }
+    
+    %% PRESTACION_MEDICA (m_product)
+    PRESTACION_MEDICA {
+        string codigo_prestacion "value"
+        string nombre_prestacion "name"
+        string descripcion "description"
+        int categoria_id "m_product_category_id"
+        string tipo_producto "producttype"
+        decimal precio_base "base price"
+        bool activo "isactive"
+    }
+    
+    %% CATEGORIA_PRESTACION (m_product_category)
+    CATEGORIA_PRESTACION {
+        string codigo_categoria "category code"
+        string nombre_categoria "category name"
+    }
+    
+    %% CENTRO_MEDICO (ex_locale)
+    CENTRO_MEDICO {
+        string codigo_centro "locale code"
+        string nombre_centro "locale name"
+        string direccion "address"
+        string ciudad "city"
+        string tipo_centro "clinic/hospital"
+    }
+    
+    %% CUENTA_CONTABLE (referenciada en i_accrual)
+    CUENTA_CONTABLE {
+        string codigo_cuenta "ex_mainaccount"
+        string nombre_cuenta "account name"
+        string tipo_cuenta "account type"
+    }
+    
+    %% FACTURA (c_invoice)
+    FACTURA {
+        string numero_factura "documentno"
+        date fecha_emision "dateinvoiced"
+        date fecha_vencimiento "duedate"
+        int paciente_id "c_bpartner_id"
+        int episodio_id "ex_episode_id"
+        decimal monto_total "grandtotal"
+        string estado_documento "docstatus"
+        string tipo_documento "doctype"
+    }
+    
+    %% LINEA_FACTURA (c_invoiceline)
+    LINEA_FACTURA {
+        int factura_id "c_invoice_id"
+        int prestacion_id "m_product_id"
+        decimal monto_linea "linenetamt"
+        decimal monto_seguro "ex_insuranceamount"
+        decimal monto_copago "ex_copayment"
+        decimal monto_excedente "ex_surplusamount"
+        int cantidad "qtyinvoiced"
+        decimal precio_unitario "priceactual"
+    }
+    
+    %% TRANSACCION_CAJA (ex_postransaction)
+    TRANSACCION_CAJA {
+        string numero_transaccion "value"
+        datetime fecha_hora "created"
+        int caja_id "ex_possession_id"
+        int cajero_id "ad_user_id"
+        decimal monto_total "total amount"
+        string estado "status"
+    }
+    
+    %% LINEA_TRANSACCION (ex_postransactionline)
+    LINEA_TRANSACCION {
+        int transaccion_id "ex_postransaction_id"
+        int tipo_pago_id "ex_tendertype_id"
+        decimal monto "amount"
+        string referencia "reference"
+    }
+    
+    %% CAJA (ex_possession)
+    CAJA {
+        string codigo_caja "possession code"
+        string nombre_caja "possession name"
+        int centro_medico_id "ex_locale_id"
+        bool activa "isactive"
+    }
+    
+    %% CAJERO (ad_user)
+    CAJERO {
+        string codigo_usuario "user code"
+        string nombre_cajero "name"
+        string email "email"
+    }
+    
+    %% TIPO_PAGO (ex_tendertype)
+    TIPO_PAGO {
+        string codigo_tipo "tender code"
+        string nombre_tipo "tender name"
+        string descripcion "cash/card/transfer"
+    }
